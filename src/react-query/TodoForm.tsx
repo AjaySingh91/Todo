@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { useRef } from 'react';
 import { Todo } from './hooks/useTodos';
 import APIClient from './services/apiClient';
@@ -16,18 +15,18 @@ const TodoForm = () => {
   const queryClient = useQueryClient();
 
   const addTodo = useMutation<Todo, Error,Todo, AddTodoContext>({
-    mutationFn: async (newTodo) => {
-      const todoWithId = { ...newTodo, id: uuidv4() }
-      const response = await apiClient.post<Todo>(newTodo);
-      return response.data;
-    },
+  mutationFn: apiClient.post,
+  
 
   onMutate:(newTodo: Todo) => {
     const previousTodos = queryClient.getQueryData<Todo[]>(['todos']) || [];
-    queryClient.setQueriesData<Todo[]>(['todos'], todos => [newTodo, ...(todos || [])])
+    const id = uuidv4(); // Generate a unique ID
+    const todoWithId = { ...newTodo, id };
+    queryClient.setQueriesData<Todo[]>(['todos'], (todos) => [newTodo, ...(todos || [])])
     if(ref.current) ref.current.value = '';
     return {previousTodos}
   },
+
   onSuccess: (savedTodo ,newTodo) =>{
       // Approach : invalidating the cache for fetching agin for new added data
       // queryClient.invalidateQueries({
